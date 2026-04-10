@@ -48,6 +48,8 @@ const RE_DISQUALIFIED = /[}｝]/;
 const RE_VERTICAL_PIPES_G = /[|│┃｜]/g;
 const RE_JAPANESE_SCRIPT = /[\u3041-\u3096\u30a1-\u30f6\uff66-\uff9f\u4e00-\u9faf\u3400-\u4dbf]/;
 const RE_MEANINGFUL_JP = /[\u3041-\u3096\u30a1-\u30f6\uff66-\uff9f\u4e00-\u9faf\u3400-\u4dbf]/;
+// Gap regex for vertical box content: allows whitespace, Japanese chars, fullwidth chars, and box-drawing vertical chars (│┃ used as ー in vertical text)
+const RE_VERT_BOX_GAP = /^[ \u3000\u00A0\u2000-\u200B\u2009\u3041-\u3096\u30a1-\u30f6\uff66-\uff9f\u4e00-\u9faf\u3400-\u4dbf\uff01-\uff5e│┃]*$/;
 
 // --- Display width helpers (full-width chars = 2 columns, half-width = 1) ---
 const isFullWidthChar = (code: number): boolean => {
@@ -529,38 +531,60 @@ function segmentContent(content: string, requestId: number): void {
                          /^[ \u3000\u00A0\u2000-\u200B\u2009:.]*$/.test(line.substring(currentOffset + part.length, rightBorderIdx)) &&
                          /^[ \u3000\u00A0\u2000-\u200B\u2009:.]*$/.test(line.substring(rightBorderIdx + 1));
 
+      // For isVerticalBox: find dedicated pipe/arrow borders (|, ｜, >, ＞ for left; |, ｜, <, ＜ for right)
+      // This skips box-drawing chars like │/┃ that may appear as content in vertical text (representing ー)
+      let vertLeftPipeIdx = -1;
+      for (let i = currentOffset - 1; i >= 0; i--) {
+        if (line[i] === '|' || line[i] === '｜' || line[i] === '>' || line[i] === '＞') {
+          vertLeftPipeIdx = i; break;
+        }
+      }
+      let vertRightPipeIdx = -1;
+      for (let i = currentOffset + part.length; i < line.length; i++) {
+        if (line[i] === '|' || line[i] === '｜' || line[i] === '<' || line[i] === '＜') {
+          vertRightPipeIdx = i; break;
+        }
+      }
+
       const isVerticalBox = !RE_DISQUALIFIED.test(part) &&
-                         RE_JAPANESE_SCRIPT.test(part) &&
-                         leftBorderIdx !== -1 && rightBorderIdx !== -1 &&
+                         (RE_JAPANESE_SCRIPT.test(part) || /^[\uff01-\uff5e\s\u3000\u00A0\u2000-\u200B\u2009│┃]*$/.test(part)) &&
+                         vertLeftPipeIdx !== -1 && vertRightPipeIdx !== -1 &&
                          (
-                           ((line[leftBorderIdx] === '|' || line[leftBorderIdx] === '｜') && (line[rightBorderIdx] === '|' || line[rightBorderIdx] === '｜')) ||
-                           ((line[leftBorderIdx] === '>' || line[leftBorderIdx] === '＞') && (line[rightBorderIdx] === '<' || line[rightBorderIdx] === '＜'))
+                           ((line[vertLeftPipeIdx] === '|' || line[vertLeftPipeIdx] === '｜') && (line[vertRightPipeIdx] === '|' || line[vertRightPipeIdx] === '｜')) ||
+                           ((line[vertLeftPipeIdx] === '>' || line[vertLeftPipeIdx] === '＞') && (line[vertRightPipeIdx] === '<' || line[vertRightPipeIdx] === '＜'))
                          ) &&
-                         /^[ \u3000\u00A0\u2000-\u200B\u2009]*$/.test(line.substring(leftBorderIdx + 1, currentOffset)) &&
-                         /^[ \u3000\u00A0\u2000-\u200B\u2009]*$/.test(line.substring(currentOffset + part.length, rightBorderIdx)) &&
+                         RE_VERT_BOX_GAP.test(line.substring(vertLeftPipeIdx + 1, currentOffset)) &&
+                         RE_VERT_BOX_GAP.test(line.substring(currentOffset + part.length, vertRightPipeIdx)) &&
+                         // Right border must be at or near end of line (no content after it) to avoid matching AA art pipes
+                         RE_STRICT_BLANK.test(line.substring(vertRightPipeIdx + 1)) &&
+                         // Vertical box content is sparse: at most 3 non-whitespace chars between pipe borders
+                         line.substring(vertLeftPipeIdx + 1, vertRightPipeIdx).replace(/[\s\u3000\u00A0\u2000-\u200B\u2009]/g, '').length <= 3 &&
                          (() => {
                            const prevLine = lineIdx > 0 ? lines[lineIdx - 1] : "";
                            const nextLine = lineIdx < lines.length - 1 ? lines[lineIdx + 1] : "";
+                           // Use display-width-based alignment to find matching borders on adjacent lines,
+                           // since mixed full/half-width AA art causes character indices to differ even when visually aligned.
                            const checkBorder = (l: string, idx: number, char: string) => {
                              if (!l || idx === -1) return false;
                              const isPipe = char === '|' || char === '｜';
                              const isArrowLeft = char === '>' || char === '＞';
                              const isArrowRight = char === '<' || char === '＜';
-                             
-                             for (let i = idx - 1; i <= idx + 1; i++) {
-                               if (i >= 0 && i < l.length) {
-                                 const c = l[i];
-                                 if (isPipe && (c === '|' || c === '｜' || c === '│' || c === '┃')) return true;
-                                 if (isArrowLeft && (c === '>' || c === '＞')) return true;
-                                 if (isArrowRight && (c === '<' || c === '＜')) return true;
-                               }
+                             const dispW = getDisplayWidth(line.substring(0, idx));
+                             const checkStart = Math.max(0, dispW - 8);
+                             const checkEnd = dispW + 9;
+                             const substr = substringByDisplayCols(l, checkStart, checkEnd);
+                             for (let i = 0; i < substr.length; i++) {
+                               const c = substr[i];
+                               if (isPipe && (c === '|' || c === '｜' || c === '│' || c === '┃')) return true;
+                               if (isArrowLeft && (c === '>' || c === '＞')) return true;
+                               if (isArrowRight && (c === '<' || c === '＜')) return true;
                              }
                              return false;
                            };
-                           const leftChar = line[leftBorderIdx];
-                           const rightChar = line[rightBorderIdx];
-                           const hasUpper = checkBorder(prevLine, leftBorderIdx, leftChar) && checkBorder(prevLine, rightBorderIdx, rightChar);
-                           const hasLower = checkBorder(nextLine, leftBorderIdx, leftChar) && checkBorder(nextLine, rightBorderIdx, rightChar);
+                           const leftChar = line[vertLeftPipeIdx];
+                           const rightChar = line[vertRightPipeIdx];
+                           const hasUpper = checkBorder(prevLine, vertLeftPipeIdx, leftChar) && checkBorder(prevLine, vertRightPipeIdx, rightChar);
+                           const hasLower = checkBorder(nextLine, vertLeftPipeIdx, leftChar) && checkBorder(nextLine, vertRightPipeIdx, rightChar);
                            return hasUpper || hasLower;
                          })();
 
