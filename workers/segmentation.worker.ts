@@ -48,8 +48,14 @@ const RE_DISQUALIFIED = /[}｝]/;
 const RE_VERTICAL_PIPES_G = /[|│┃｜]/g;
 const RE_JAPANESE_SCRIPT = /[\u3041-\u3096\u30a1-\u30f6\uff66-\uff9f\u4e00-\u9faf\u3400-\u4dbf]/;
 const RE_MEANINGFUL_JP = /[\u3041-\u3096\u30a1-\u30f6\uff66-\uff9f\u4e00-\u9faf\u3400-\u4dbf]/;
+// Shared Unicode range for Japanese script chars (hiragana, katakana, half-width katakana, CJK)
+const JP_SCRIPT_RANGE = '\u3041-\u3096\u30a1-\u30f6\uff66-\uff9f\u4e00-\u9faf\u3400-\u4dbf';
 // Gap regex for vertical box content: allows whitespace, Japanese chars, fullwidth chars, and box-drawing vertical chars (│┃ used as ー in vertical text)
-const RE_VERT_BOX_GAP = /^[ \u3000\u00A0\u2000-\u200B\u2009\u3041-\u3096\u30a1-\u30f6\uff66-\uff9f\u4e00-\u9faf\u3400-\u4dbf\uff01-\uff5e│┃]*$/;
+const RE_VERT_BOX_GAP = new RegExp(`^[ \\u3000\\u00A0\\u2000-\\u200B\\u2009${JP_SCRIPT_RANGE}\\uff01-\\uff5e│┃]*$`);
+// Display-width tolerance for border alignment check (handles mixed full/half-width AA art)
+const VERT_BOX_BORDER_TOLERANCE = 8;
+// Max non-whitespace chars allowed between pipe borders in vertical box content
+const MAX_VERT_BOX_CONTENT_CHARS = 3;
 
 // --- Display width helpers (full-width chars = 2 columns, half-width = 1) ---
 const isFullWidthChar = (code: number): boolean => {
@@ -558,7 +564,7 @@ function segmentContent(content: string, requestId: number): void {
                          // Right border must be at or near end of line (no content after it) to avoid matching AA art pipes
                          RE_STRICT_BLANK.test(line.substring(vertRightPipeIdx + 1)) &&
                          // Vertical box content is sparse: at most 3 non-whitespace chars between pipe borders
-                         line.substring(vertLeftPipeIdx + 1, vertRightPipeIdx).replace(/[\s\u3000\u00A0\u2000-\u200B\u2009]/g, '').length <= 3 &&
+                         line.substring(vertLeftPipeIdx + 1, vertRightPipeIdx).replace(/[\s\u3000\u00A0\u2000-\u200B\u2009]/g, '').length <= MAX_VERT_BOX_CONTENT_CHARS &&
                          (() => {
                            const prevLine = lineIdx > 0 ? lines[lineIdx - 1] : "";
                            const nextLine = lineIdx < lines.length - 1 ? lines[lineIdx + 1] : "";
@@ -570,8 +576,8 @@ function segmentContent(content: string, requestId: number): void {
                              const isArrowLeft = char === '>' || char === '＞';
                              const isArrowRight = char === '<' || char === '＜';
                              const dispW = getDisplayWidth(line.substring(0, idx));
-                             const checkStart = Math.max(0, dispW - 8);
-                             const checkEnd = dispW + 9;
+                             const checkStart = Math.max(0, dispW - VERT_BOX_BORDER_TOLERANCE);
+                             const checkEnd = dispW + VERT_BOX_BORDER_TOLERANCE + 1;
                              const substr = substringByDisplayCols(l, checkStart, checkEnd);
                              for (let i = 0; i < substr.length; i++) {
                                const c = substr[i];
