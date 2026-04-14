@@ -5,7 +5,7 @@
 // --- Pre-compiled regex patterns ---
 const RE_JAPANESE_CHAR = /[\u3040-\u309f\u30a0-\u30ff\uff66-\uff9f\u4e00-\u9faf\u3400-\u4dbf\uff01-\uff5e]/;
 const RE_JAPANESE_CHARS_G = /[\u3040-\u309f\u30a0-\u30ff\uff66-\uff9f\u4e00-\u9faf\u3400-\u4dbf\uff01-\uff5e]/g;
-const RE_STRICT_JAPANESE = /^(?![\s\S]*[|│┃｜\/／\\＼_＿￣─━\-−≦≧=＝<＜>＞:：;；´｀¨'"`+＋*＊\^{}\[\]｛｝［］丶ヽヾ〆丿乂爻巛川〒A-Za-zＡ-Ｚａ-ｚ!?∫∬~从亻Ⅰ-ⅿ()（）《》〈〉''""\u2500-\u257F\u2580-\u259F\u25A0-\u25FF\u2200-\u22FF\u2190-\u21FF\u2010-\u2015\u0370-\u03FF\u0400-\u04FF\.\,])(?![\s\S]*(?:[二三七彡ニメ八人入ヌノト一へヘ大イムくミシツテ了心ハフソィッェァォュョエ工乀乁口ロ日目回凵凹凸匚コ丁十小山マヒリルレワしー―つっぅ冖宀冂广廴廾彐彳忄扌氵犭纟艹辶阝丈乃亅卜匕个丫儿厂厶ヲ\uff66-\uff9f][\s\.\,・]*){5,})(?=(?:[\s\S]*[ぁ-ん]){3,}|(?:[\s\S]*[ァ-ン\uff66-\uff9f]){3,}|(?:[\s\S]*[一-龯]){3,}|(?=[\s\S]*[！？。「」『』【】…、，])(?:[\s\S]*[ぁ-んァ-ン一-龯]){2,}|(?=[\s\S]*ー)(?:[\s\S]*[ぁ-ん]){2,}|(?=[\s\S]*ー)(?:[\s\S]*[ァ-ン\uff66-\uff9f]){2,}|(?=[\s\S]*[ぁ-ん])(?=[\s\S]*[一-龯])(?:[\s\S]*[ぁ-ん一-龯]){3,}).+$/;
+const RE_STRICT_JAPANESE = /^(?![\s\S]*[|│┃｜\/／\\＼_＿￣─━\-−≦≧=＝<＜>＞:：;；´｀¨'"`+＋*＊\^{}\[\]｛｝［］丶ヽヾ〆丿乂爻巛川〒A-Za-zＡ-Ｚａ-ｚ!?∫∬~从亻Ⅰ-ⅿ()（）《》〈〉''""\u2500-\u257F\u2580-\u259F\u25A0-\u25FF\u2200-\u22FF\u2190-\u21FF\u2010-\u2015\u0370-\u03FF\u0400-\u04FF\.\,])(?![\s\S]*(?:[二三七彡ニメ八人入ヌ노토一へヘ大イムくミシツ테了心ハフソィッェァォュョエ工乀乁口ロ日目回凵凹凸匚コ丁十小山マヒリルレワ\uff66-\uff9f][\s\.\,・]*){5,})(?=(?:[\s\S]*[ぁ-ん]){3,}|(?:[\s\S]*[ァ-ン\uff66-\uff9f]){3,}|(?:[\s\S]*[一-龯]){3,}|(?=[\s\S]*[！？。「」『』【】…、，])(?:[\s\S]*[ぁ-んァ-ン一-龯]){2,}|(?=[\s\S]*ー)(?:[\s\S]*[ぁ-ん]){2,}|(?=[\s\S]*ー)(?:[\s\S]*[ァ-ン\uff66-\uff9f]){2,}|(?=[\s\S]*[ぁ-ん])(?=[\s\S]*[一-龯])(?:[\s\S]*[ぁ-ん一-龯]){3,}).+$/;
 const RE_GAP = /([\s\u3000\u00A0\u2000-\u200B]*(?:[|│┃｜＞＜\u2500-\u257F／＼\[\]｛｝［］★◆:.]+|[\s\u3000\u00A0\u2000-\u200B]{2,})[\s\u3000\u00A0\u2000-\u200B]*)/;
 const RE_SEPARATOR = /^[\s\u3000\u00A0\u2000-\u200B]*(?:[|│┃｜＞＜\u2500-\u257F／＼\[\]｛｝［］★◆:.]+|[\s\u3000\u00A0\u2000-\u200B]{2,})[\s\u3000\u00A0\u2000-\u200B]*$/;
 const RE_WHITESPACE_GAP = /^[\s\u3000\u00A0\u2000-\u200B]{2,}$/;
@@ -32,7 +32,7 @@ const RE_BOUNDARY_DRAWING = /^[\s\u3000]*[|│┃｜\/／\\＼_＿￣─━]|[\s
 const RE_STANDARD_HIRAGANA = /[ぁ-ん]/;
 const RE_GEGE_G = /[ゝゞ]/g;
 const RE_DRAWING_MARKS = /[ヽヾ丶〆丿乂爻巛川]/;
-const RE_AA_CHARS = /[二三七彡ニメ八人入ヌノト一へヘ大イムくミシツテ了心ハフソィッェァォュョエ工乀乁口ロ日目回凵凹凸匚コ丁十小山マヒリル레와시アイウエオカ키쿠케코사시스세소타치츠테토나니누네노하히후헤호마미무메모야유요라릴레로완ー―つっぅヽヾ丶〆丿乂爻巛川芹云ゝゞ冖宀冂广廴廾彐彳忄扌氵犭纟艹辶阝丈乃亅卜匕个丫儿厂厶ヲ\uff65-\uff9fA-Za-z0-9Ａ-Ｚａ-ｚ０-９＿￣]/;
+const RE_AA_CHARS = /[二三七彡ニメ八人入ヌノト一へヘ大イムくミシツテ了心ハフソィッェァォュョエ工乀乁口ロ日目回凵凹凸匚コ丁十小山마히릴레와시アイウエ오카키쿠케코사시스세소타치츠테토나니누네노하히후헤호마미무메모야유요라릴레로완ー―つっぅヽヾ丶〆丿乂爻巛川芹云ゝゞ冖宀冂广廴廾彐彳忄扌氵犭纟艹辶阝丈乃亅卜匕个丫儿厂厶ヲ\uff65-\uff9fA-Za-z0-9Ａ-Ｚａ-ｚ０-９＿￣]/;
 const RE_NON_JP_G = /[^\u3040-\u309f\u30a0-\u30ff\uff66-\uff9f\u4e00-\u9faf\u3400-\u4dbf\uff01-\uff5e]/g;
 const RE_SYMBOLS_G = /[^\u3040-\u309f\u30a0-\u30ff\uff66-\uff9f\u4e00-\u9faf\u3400-\u4dbf\uff01-\uff5e\s]/g;
 const RE_HALFWIDTH_PUNCT = /[\uff61-\uff65]/;
@@ -44,7 +44,9 @@ const RE_STRICT_BLANK = /^[\s\u3000\u00A0\u2000-\u200B]*$/;
 // A real box border separator has 1 or more pipe/arrow/box chars with optional whitespace
 const RE_SINGLE_BOX_BORDER = /^[\s\u3000\u00A0\u2000-\u200B]*[|│┃｜＞＜\u2500-\u257F／＼\[\]｛｝［］:.]+[\s\u3000\u00A0\u2000-\u200B]*$/;
 const RE_HW_DAKUTEN = /[\uff9e\uff9f]/;
-const RE_DISQUALIFIED = /[}｝]/;
+const RE_DISQUALIFIED = /[}｝囗,!＿|ｌl丿／：｜><]/;
+const RE_AUTO_SELECT_EXCLUDE = /[＼│＞＜口]|(^[ﾆ二ニ々]+$)/;
+const RE_NOISE_ONLY = /^[\s\u3000\u00A0\u2000-\u200B从人f´￣｀ヽ_！]+$/;
 const RE_VERTICAL_PIPES_G = /[|│┃｜]/g;
 const RE_JAPANESE_SCRIPT = /[\u3041-\u3096\u30a1-\u30f6\uff66-\uff9f\u4e00-\u9faf\u3400-\u4dbf]/;
 const RE_MEANINGFUL_JP = /[\u3041-\u3096\u30a1-\u30f6\uff66-\uff9f\u4e00-\u9faf\u3400-\u4dbf]/;
@@ -291,6 +293,7 @@ interface WorkerTextSegment {
   isVerticalBox?: boolean;
   isIndentedDialogue?: boolean;
   isIsolatedDialogue?: boolean;
+  isAutoSelectExcluded?: boolean;
   isSelected: boolean;
   isTranslated: boolean;
 }
@@ -469,7 +472,7 @@ function segmentContent(content: string, requestId: number): void {
       // Allows: hiragana (お,え〜), katakana sound effects, kanji text
       const hasHiragana = RE_STANDARD_HIRAGANA.test(part);
       const hasJapaneseScript = RE_JAPANESE_SCRIPT.test(part);
-      const isNeverSelectable = RE_DISQUALIFIED.test(part) || !RE_MEANINGFUL_JP.test(part) || (!hasHiragana && isAllAAOnly && jpCharsMatch.length <= 1);
+      const isNeverSelectable = RE_DISQUALIFIED.test(part) || RE_NOISE_ONLY.test(part) || !RE_MEANINGFUL_JP.test(part) || (!hasHiragana && isAllAAOnly && jpCharsMatch.length <= 1);
       const isAllSidesBlankQualified = isAllSidesBlank && !isNeverSelectable;
 
       // Relaxed path first (isAllSidesBlank already computed) to short-circuit the expensive strict regex
@@ -521,7 +524,16 @@ function segmentContent(content: string, requestId: number): void {
       const kanaMatch = part.match(/[ぁ-んァ-ン\uff66-\uff9f]/g) || [];
       const uniqueKanaCount = new Set(kanaMatch).size;
 
-      const isArrowBox = !RE_DISQUALIFIED.test(part) &&
+      const leftContent = line.substring(0, currentOffset);
+      const trailingSpacesMatch = leftContent.match(/[\s\u3000\u00A0\u2000-\u200B]+$/);
+      const trailingSpaces = trailingSpacesMatch ? trailingSpacesMatch[0] : "";
+
+      const hiraganaMatch = part.match(/[ぁ-ん]/g) || [];
+      const uniqueHiraganaCount = new Set(hiraganaMatch).size;
+
+      const rightContent = line.substring(currentOffset + part.length);
+
+      const isArrowBox = !RE_DISQUALIFIED.test(part) && !RE_NOISE_ONLY.test(part) &&
                          hasJapaneseChar(part) &&
                          // Support vertical writing: allow shorter parts if they are clearly inside an arrow box
                          (part.length >= 3 ? uniqueKanaCount >= 2 : true) &&
@@ -552,7 +564,7 @@ function segmentContent(content: string, requestId: number): void {
         }
       }
 
-      const isVerticalBox = !RE_DISQUALIFIED.test(part) &&
+      const isVerticalBox = !RE_DISQUALIFIED.test(part) && !RE_NOISE_ONLY.test(part) &&
                          (RE_JAPANESE_SCRIPT.test(part) || /^[\uff01-\uff5e\s\u3000\u00A0\u2000-\u200B\u2009│┃]*$/.test(part)) &&
                          vertLeftPipeIdx !== -1 && vertRightPipeIdx !== -1 &&
                          (
@@ -594,22 +606,13 @@ function segmentContent(content: string, requestId: number): void {
                            return hasUpper || hasLower;
                          })();
 
-      const leftContent = line.substring(0, currentOffset);
-      const trailingSpacesMatch = leftContent.match(/[\s\u3000\u00A0\u2000-\u200B]+$/);
-      const trailingSpaces = trailingSpacesMatch ? trailingSpacesMatch[0] : "";
-
-      const hiraganaMatch = part.match(/[ぁ-ん]/g) || [];
-      const uniqueHiraganaCount = new Set(hiraganaMatch).size;
-
-      const isIndentedDialogue = !RE_DISQUALIFIED.test(part) &&
+      const isIndentedDialogue = !RE_DISQUALIFIED.test(part) && !RE_NOISE_ONLY.test(part) &&
                                  hasJapaneseChar(part) && !getIsDrawing() &&
                                  part.length >= 5 && uniqueHiraganaCount >= 2 &&
                                  getDisplayWidth(trailingSpaces) >= 6 &&
                                  RE_STRICT_BLANK.test(line.substring(currentOffset + part.length));
 
-      const rightContent = line.substring(currentOffset + part.length);
-
-      const isIsolatedDialogue = !RE_DISQUALIFIED.test(part) &&
+      const isIsolatedDialogue = !RE_DISQUALIFIED.test(part) && !RE_NOISE_ONLY.test(part) &&
                                  /[ぁ-んァ-ン\uff66-\uff9f]/.test(part) &&
                                  (!getIsDrawing() || !isDrawing(part)) &&
                                  getDisplayWidth(trailingSpaces) >= 2 &&
@@ -629,7 +632,8 @@ function segmentContent(content: string, requestId: number): void {
         // Reject if surrounded by drawings on both sides
         && !(lineIdx > 0 && lineIdx < lines.length - 1 && isDrawing(lines[lineIdx - 1]) && isDrawing(lines[lineIdx + 1]));
 
-      const isJapanese = !RE_DISQUALIFIED.test(part) && (isJp || isAutoSelected || isArrowBox || isVerticalBox || isIndentedDialogue || isIsolatedDialogue);
+      const isJapanese = !RE_DISQUALIFIED.test(part) && !RE_STRICT_BLANK.test(part) && !RE_NOISE_ONLY.test(part) && (isJp || isAutoSelected || isArrowBox || isVerticalBox || isIndentedDialogue || isIsolatedDialogue);
+      const isAutoSelectExcluded = RE_AUTO_SELECT_EXCLUDE.test(part);
 
       newSegments.push({
         id: `seg-${lineIdx}-${currentOffset}`,
@@ -644,6 +648,7 @@ function segmentContent(content: string, requestId: number): void {
         isVerticalBox: isVerticalBox,
         isIndentedDialogue: isIndentedDialogue,
         isIsolatedDialogue: isIsolatedDialogue,
+        isAutoSelectExcluded: isAutoSelectExcluded,
         isSelected: false,
         isTranslated: false
       });

@@ -6,6 +6,7 @@ import { SelectionRange, ViewMode } from '../types';
 interface ToolbarProps {
   selection: SelectionRange | null;
   isTranslating: boolean;
+  translationProgress: { current: number; total: number; percent: number } | null;
   onTranslate: () => void;
   onClearSelection: () => void;
   lastTranslation: { original: string; translated: string } | null;
@@ -23,6 +24,7 @@ interface ToolbarProps {
 export const Toolbar: React.FC<ToolbarProps> = ({ 
   selection, 
   isTranslating, 
+  translationProgress,
   onTranslate, 
   onClearSelection,
   lastTranslation,
@@ -124,12 +126,22 @@ export const Toolbar: React.FC<ToolbarProps> = ({
                         <button
                             onClick={onSmartTranslate}
                             disabled={isTranslating}
-                            className="flex items-center gap-2 bg-blue-600 hover:bg-blue-500 disabled:bg-blue-800 text-white px-4 py-2 rounded-lg font-medium transition-colors shadow-lg shadow-blue-900/20"
+                            className="relative flex items-center gap-2 bg-blue-600 hover:bg-blue-500 disabled:bg-blue-800 text-white px-4 py-2 rounded-lg font-medium transition-all shadow-lg shadow-blue-900/20 overflow-hidden min-w-[120px] justify-center"
                         >
                             {isTranslating ? (
                                 <>
-                                    <Loader2 className="w-4 h-4 animate-spin" />
-                                    <span>처리 중...</span>
+                                    {translationProgress && (
+                                      <div 
+                                        className="absolute inset-0 bg-blue-500/30 transition-all duration-500 ease-out"
+                                        style={{ width: `${translationProgress.percent}%` }}
+                                      />
+                                    )}
+                                    <Loader2 className="w-4 h-4 animate-spin relative z-10" />
+                                    <span className="relative z-10">
+                                      {translationProgress 
+                                        ? `${translationProgress.percent}%` 
+                                        : '처리 중...'}
+                                    </span>
                                 </>
                             ) : (
                                 <>

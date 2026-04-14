@@ -176,7 +176,16 @@ export const Editor: React.FC<EditorProps> = ({
     const dist = Math.sqrt(Math.pow(dragCurrent.x - dragStart.x, 2) + Math.pow(dragCurrent.y - dragStart.y, 2));
     const isClick = dist < 5; 
 
-    if (!isClick) {
+    if (isClick) {
+        // Handle click toggle in drag mode
+        const target = document.elementFromPoint(e.clientX, e.clientY);
+        if (target instanceof HTMLElement && target.id) {
+            const segment = segments.find(s => s.id === target.id);
+            if (segment && segment.isJapanese) {
+                toggleSegmentSelection(target.id);
+            }
+        }
+    } else {
         // Find intersecting segments
         const newSegments = segments.map(seg => {
           if (!seg.isJapanese) return seg;

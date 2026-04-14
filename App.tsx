@@ -23,6 +23,7 @@ function App() {
   const [segments, setSegments] = useState<TextSegment[]>([]);
   
   const [isTranslating, setIsTranslating] = useState(false);
+  const [translationProgress, setTranslationProgress] = useState<{ current: number; total: number; percent: number } | null>(null);
   const [isReportOpen, setIsReportOpen] = useState(false);
   const [isStatsOpen, setIsStatsOpen] = useState(false);
   const [isChangelogOpen, setIsChangelogOpen] = useState(false);
@@ -172,40 +173,87 @@ function App() {
     if (selectedSegments.length === 0) return;
 
     setIsTranslating(true);
+    setTranslationProgress({ current: 0, total: 1, percent: 0 });
     setHistory({ prevContent: content, prevSegments: [...segments] });
 
     try {
-      const textsToTranslate = selectedSegments.map(s => s.text);
-      const { translations: translatedTexts, usage } = await translateBatch(
+      const textsToTranslate: (string | null)[] = [];
+      let lastSelectedIndex = -1;
+      
+      segments.forEach((s, idx) => {
+        if (s.isSelected) {
+          // 선택된 세그먼트 사이에 큰 공백(5개 이상의 세그먼트 혹은 빈 줄)이 있으면 끊어줌
+          if (lastSelectedIndex !== -1) {
+            const gapSegments = segments.slice(lastSelectedIndex + 1, idx);
+            // 줄바꿈(newline)이 3개 이상 포함되어 있거나, 아주 큰 세그먼트 차이가 나면 끊어줌
+            const newlineCount = gapSegments.reduce((acc, gs) => acc + (gs.text.split('\n').length - 1), 0);
+            const hasLargeGap = newlineCount >= 3 || gapSegments.length > 20;
+            
+            if (hasLargeGap) {
+              textsToTranslate.push(null);
+            }
+          }
+          textsToTranslate.push(s.text);
+          lastSelectedIndex = idx;
+        }
+      });
+      
+      const updateSegmentsWithPartial = (translatedTexts: string[]) => {
+        // 성능 최적화: ID 기반 Map을 생성하여 O(1) 조회가 가능하게 함
+        const translationMap = new Map();
+        selectedSegments.forEach((sel, i) => {
+          if (translatedTexts[i] !== undefined) {
+            translationMap.set(sel.id, translatedTexts[i]);
+          }
+        });
+
+        const newSegments = segments.map(s => {
+          if (translationMap.has(s.id)) {
+            const translatedText = translationMap.get(s.id);
+            const isUnchanged = translatedText.trim() === s.text.trim();
+            
+            return {
+              ...s,
+              text: translatedText,
+              isTranslated: !isUnchanged,
+              isSelected: isUnchanged
+            };
+          }
+          return s;
+        });
+
+        setSegments(newSegments);
+        const newContent = newSegments.map(s => s.text).join('');
+        setContent(newContent);
+      };
+
+      const { translations: finalTranslations, usage } = await translateBatch(
           textsToTranslate,
           customDictionary, 
           useDefaultDictionary,
           systemPrompt,
-          apiKey
+          apiKey,
+          (progress) => {
+            setTranslationProgress({
+              current: progress.completedChunks,
+              total: progress.totalChunks,
+              percent: progress.currentProgress
+            });
+          },
+          (partialTranslations, partialUsage) => {
+            updateSegmentsWithPartial(partialTranslations);
+            // Update stats in real-time too
+            setApiStats(prev => ({
+              requestCount: partialUsage.requestCount,
+              inputTokens: partialUsage.inputTokens,
+              outputTokens: partialUsage.outputTokens,
+              totalCost: partialUsage.totalCost
+            }));
+          }
       );
       
-      const newSegments = segments.map(s => {
-        const index = selectedSegments.findIndex(sel => sel.id === s.id);
-        if (index !== -1) {
-          const translatedText = translatedTexts[index] || s.text;
-          // 번역 결과가 원문과 동일한 경우 (실패 또는 거부로 간주) 선택 상태 유지
-          const isUnchanged = translatedText.trim() === s.text.trim();
-          
-          return {
-            ...s,
-            text: translatedText,
-            isTranslated: !isUnchanged,
-            isSelected: isUnchanged
-          };
-        }
-        return s;
-      });
-
-      setSegments(newSegments);
+      updateSegmentsWithPartial(finalTranslations);
       updateStats(usage);
-      
-      const newContent = newSegments.map(s => s.text).join('');
-      setContent(newContent);
       
       setLastTranslated({ original: `${selectedSegments.length} items`, translated: "Done" });
 
@@ -214,13 +262,14 @@ function App() {
       console.error(error);
     } finally {
       setIsTranslating(false);
+      setTranslationProgress(null);
     }
   };
 
   const handleSelectAllJapanese = () => {
     startTransition(() => {
       const newSegments = segments.map(s => 
-        (s.isStrictJapanese || s.isAutoSelected || s.isBoxedDialogue || s.isContextDialogue || s.isArrowBox || s.isVerticalBox || s.isIndentedDialogue || s.isIsolatedDialogue) ? { ...s, isSelected: true } : s
+        (!s.isAutoSelectExcluded && (s.isStrictJapanese || s.isAutoSelected || s.isBoxedDialogue || s.isContextDialogue || s.isArrowBox || s.isVerticalBox || s.isIndentedDialogue || s.isIsolatedDialogue)) ? { ...s, isSelected: true } : s
       );
       setSegments(newSegments);
     });
@@ -372,6 +421,7 @@ function App() {
       <Toolbar 
         selection={selection}
         isTranslating={isTranslating}
+        translationProgress={translationProgress}
         onTranslate={handleRawTranslate}
         onClearSelection={() => setSelection(null)}
         lastTranslation={lastTranslated}

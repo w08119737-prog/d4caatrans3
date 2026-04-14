@@ -30,6 +30,7 @@ export interface TextSegment {
   isVerticalBox?: boolean;
   isIndentedDialogue?: boolean;
   isIsolatedDialogue?: boolean;
+  isAutoSelectExcluded?: boolean;
   isSelected: boolean;
   isTranslated: boolean;
 }
